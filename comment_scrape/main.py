@@ -3,10 +3,12 @@ import praw
 import datetime
 import pandas as pd
 import os
+import datetime as dt
+from psaw import PushshiftAPI
 
 submission_id_file = 'submission_id_parse.txt'
 SUBREDDIT_NAME = 'CBD'
-number_of_posts = 10000
+number_of_posts = 1 # 10000
 
 
 def authenticate():
@@ -32,12 +34,12 @@ def parsed_ids(file):
 
 
 def save_data(data_frame):
-    if os.path.exists('./results.csv'):
-        with open('results.csv', 'a') as fout:
+    if os.path.exists('./results1.csv'):
+        with open('results1.csv', 'a') as fout:
             data_frame.to_csv(fout, index=False, header=False)
     else:
         print('Creating File...')
-        data_frame.to_csv('results.csv', index=False)
+        data_frame.to_csv('results1.csv', index=False)
         print('File Created')
 
 
@@ -46,7 +48,7 @@ def log_id(id_num, id_list):
         fout.write(id_num + '\n')
 
 
-def scrape_data(subreddit, submission_id_list):
+def scrape_data(subreddit, submission_id_list, api):
 
     def get_date(created):
         return datetime.datetime.fromtimestamp(created)
@@ -60,7 +62,12 @@ def scrape_data(subreddit, submission_id_list):
         "post link": [],
     }
 
-    for submission in subreddit.hot(limit=number_of_posts):
+    start_epoch = int(dt.datetime(2017, 1, 1).timestamp())
+    submission_ids = list(api.search_submissions(after=start_epoch,
+                                                 subreddit='CBD',
+                                                 filter=['url', 'author', 'title', 'subreddit']))
+
+    for submission in submission_ids:#  subreddit.hot(limit=number_of_posts):
         if submission.id not in submission_id_list:
             log_id(submission.id, submission_id_file)
 
@@ -81,8 +88,10 @@ def main():
     submission_id_list = parsed_ids(submission_id_file)
 
     reddit = authenticate()
+    api = PushshiftAPI(reddit)
+
     SUBREDDIT = reddit.subreddit(SUBREDDIT_NAME)
-    comment_dct = scrape_data(SUBREDDIT, submission_id_list)
+    comment_dct = scrape_data(SUBREDDIT, submission_id_list,api)
     data_frame = pd.DataFrame(comment_dct, columns=['username',
                                                     'created at',
                                                     'comment content',
