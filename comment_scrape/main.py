@@ -34,12 +34,12 @@ def parsed_ids(file):
 
 
 def save_data(data_frame):
-    if os.path.exists('./results1.csv'):
-        with open('results1.csv', 'a') as fout:
+    if os.path.exists('./results.csv'):
+        with open('results.csv', 'a') as fout:
             data_frame.to_csv(fout, index=False, header=False)
     else:
         print('Creating File...')
-        data_frame.to_csv('results1.csv', index=False)
+        data_frame.to_csv('results.csv', index=False)
         print('File Created')
 
 
