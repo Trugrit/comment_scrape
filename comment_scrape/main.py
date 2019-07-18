@@ -6,9 +6,15 @@ import os
 import datetime as dt
 from psaw import PushshiftAPI
 
-submission_id_file = 'submission_id_parse.txt'
-SUBREDDIT_NAME = 'CBD'
+"""
+This program will grab all comments from all posts from a desired subreddit at a certian date to now 
+ex. all post and comments from r/aww starting at 2017, 1, 15
+Warning files will be very large depending on how long back you collect data from
+"""
 
+submission_id_file = 'submission_id_parse.txt'
+SUBREDDIT_NAME = 'aww'
+start_date = int(dt.datetime(2017, 1, 1).timestamp()) # Year, Month, Day 
 
 def authenticate():
     print('Authenticating User....')
@@ -60,7 +66,7 @@ def scrape_data(submission_id_list, api):
         "post link": [],
     }
 
-    start_epoch = int(dt.datetime(2017, 1, 1).timestamp())
+    start_epoch = start_date
     submission_ids = list(api.search_submissions(after=start_epoch,
                                                  subreddit='CBD',
                                                  filter=['url', 'author', 'title', 'subreddit']))
