@@ -8,7 +8,6 @@ from psaw import PushshiftAPI
 
 submission_id_file = 'submission_id_parse.txt'
 SUBREDDIT_NAME = 'CBD'
-number_of_posts = 1 # 10000
 
 
 def authenticate():
@@ -48,7 +47,7 @@ def log_id(id_num, id_list):
         fout.write(id_num + '\n')
 
 
-def scrape_data(subreddit, submission_id_list, api):
+def scrape_data(submission_id_list, api):
 
     def get_date(created):
         return datetime.datetime.fromtimestamp(created)
@@ -66,22 +65,34 @@ def scrape_data(subreddit, submission_id_list, api):
     submission_ids = list(api.search_submissions(after=start_epoch,
                                                  subreddit='CBD',
                                                  filter=['url', 'author', 'title', 'subreddit']))
+    print(len(submission_ids))
+    try:
+        for submission in submission_ids:#  subreddit.hot(limit=number_of_posts):
+            if submission.id not in submission_id_list:
+                print('Submission found: {} {}'.format(submission.id,dt.datetime.now()))
+                log_id(submission.id, submission_id_file)
 
-    for submission in submission_ids:#  subreddit.hot(limit=number_of_posts):
-        if submission.id not in submission_id_list:
-            log_id(submission.id, submission_id_file)
-
-            submission.comments.replace_more()
-            for comment in submission.comments.list():
-                if comment.author:
-                    comment_dct['username'].append(comment.author)
-                    comment_dct['created at'].append(get_date(comment.created_utc))
-                    comment_dct['comment content'].append(comment.body)
-                    comment_dct['comment link'].append('https://www.reddit.com/' + comment.permalink)
-                    comment_dct['post title'].append(submission.title)
-                    comment_dct['post link'].append('https://www.reddit.com/' + submission.permalink)
-
-    return comment_dct
+                submission.comments.replace_more()
+                for comment in submission.comments.list():
+                    if comment.author:
+                        comment_dct['username'].append(comment.author)
+                        comment_dct['created at'].append(get_date(comment.created_utc))
+                        comment_dct['comment content'].append(comment.body)
+                        comment_dct['comment link'].append('https://www.reddit.com/' + comment.permalink)
+                        comment_dct['post title'].append(submission.title)
+                        comment_dct['post link'].append('https://www.reddit.com/' + submission.permalink)
+                    
+    except Exception as e:
+        print('Error! {}'.format(e))
+        
+    finally:
+        data_frame = pd.DataFrame(comment_dct, columns=['username',
+                                                    'created at',
+                                                    'comment content',
+                                                    'comment link',
+                                                    'post title',
+                                                    'post link'])
+        save_data(data_frame)
 
 
 def main():
@@ -89,16 +100,7 @@ def main():
 
     reddit = authenticate()
     api = PushshiftAPI(reddit)
-
-    SUBREDDIT = reddit.subreddit(SUBREDDIT_NAME)
-    comment_dct = scrape_data(SUBREDDIT, submission_id_list,api)
-    data_frame = pd.DataFrame(comment_dct, columns=['username',
-                                                    'created at',
-                                                    'comment content',
-                                                    'comment link',
-                                                    'post title',
-                                                    'post link'])
-    save_data(data_frame)
+    scrape_data(submission_id_list,api)
 
 
 if __name__ == '__main__':
