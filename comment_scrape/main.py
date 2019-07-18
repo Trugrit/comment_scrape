@@ -48,7 +48,6 @@ def log_id(id_num, id_list):
 
 
 def scrape_data(submission_id_list, api):
-
     def get_date(created):
         return datetime.datetime.fromtimestamp(created)
 
@@ -67,9 +66,11 @@ def scrape_data(submission_id_list, api):
                                                  filter=['url', 'author', 'title', 'subreddit']))
     print(len(submission_ids))
     try:
-        for submission in submission_ids:#  subreddit.hot(limit=number_of_posts):
+        for submission in submission_ids:  # subreddit.hot(limit=number_of_posts):
             if submission.id not in submission_id_list:
-                print('Submission found: {} {}'.format(submission.id,dt.datetime.now()))
+                print('Submission found: Name: {author} | created: {UTC} | timestamp: {now}'.format(author=submission.author,
+                                                                                                UTC=get_date(submission.created_utc),
+                                                                                                now=dt.datetime.now()))
                 log_id(submission.id, submission_id_file)
 
                 submission.comments.replace_more()
@@ -81,18 +82,18 @@ def scrape_data(submission_id_list, api):
                         comment_dct['comment link'].append('https://www.reddit.com/' + comment.permalink)
                         comment_dct['post title'].append(submission.title)
                         comment_dct['post link'].append('https://www.reddit.com/' + submission.permalink)
-                    
     except Exception as e:
         print('Error! {}'.format(e))
-        
+
     finally:
         data_frame = pd.DataFrame(comment_dct, columns=['username',
-                                                    'created at',
-                                                    'comment content',
-                                                    'comment link',
-                                                    'post title',
-                                                    'post link'])
+                                                        'created at',
+                                                        'comment content',
+                                                        'comment link',
+                                                        'post title',
+                                                        'post link'])
         save_data(data_frame)
+        print('Program complete.')
 
 
 def main():
@@ -100,7 +101,7 @@ def main():
 
     reddit = authenticate()
     api = PushshiftAPI(reddit)
-    scrape_data(submission_id_list,api)
+    scrape_data(submission_id_list, api)
 
 
 if __name__ == '__main__':
